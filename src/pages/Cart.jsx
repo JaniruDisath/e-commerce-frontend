@@ -4,6 +4,17 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 
 import { CartContext } from "../context/CartContext";
 import { useContext } from "react";
+import axios from "axios";
+
+async function updateQuantity(id, quantity) {
+  try {
+    await axios.put(`http://localhost:8080/product/update/${id}/${quantity}`);
+    console.log("Updated:", id, quantity);
+  } catch (error) {
+    console.error("Update error:", error);
+  }
+}
+
 
 export default function Cart() {
   const { cart, setCart } = useContext(CartContext);
@@ -34,6 +45,20 @@ export default function Cart() {
     (total, item) => total + item.price * item.quantity,
     0
   );
+
+  const handleCheckout = async () => {
+    // 1. Update quantities in DB
+    for (const item of cart) {
+      await updateQuantity(item.id, item.quantity);
+    }
+
+    // 2. Empty cart
+    setCart([]);
+    localStorage.removeItem("cart");
+
+    // 3. Notify user
+    alert("Checkout successful!");
+  };
 
   return (
     <div className="container mt-4">
@@ -110,7 +135,12 @@ export default function Cart() {
                 </strong>
               </div>
 
-              <Button className="mt-4 w-100" variant="primary" size="lg">
+              <Button
+                className="mt-4 w-100"
+                variant="primary"
+                size="lg"
+                onClick={handleCheckout}
+              >
                 Proceed to Checkout
               </Button>
             </Card.Body>
